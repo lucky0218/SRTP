@@ -18,10 +18,9 @@ parser = argparse.ArgumentParser(description="Trace time delay in network subsys
     formatter_class=argparse.RawDescriptionHelpFormatter)
 parser.add_argument("--sport", help="trace this source port only")
 parser.add_argument("--dport", help="trace this destination port only")
-parser.add_argument("-s", "--sample", help="Trace sampling")
 parser.add_argument("-c", "--count", type=int, default=99999999, help="count of outputs")
 parser.add_argument("--print", action="store_true", help="print results to terminal")
-parser.add_argument("--visual", action="store_true", help="enable visualization with influxdb-grafana")
+#parser.add_argument("--visual", action="store_true", help="enable visualization with influxdb-grafana")
 args = parser.parse_args()
 
 bpf_text = open('delay_analysis_in.c').read()
