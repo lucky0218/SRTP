@@ -17,9 +17,15 @@ Print the average time, median time, and 90% percentile tail latency <b>every on
 
 参数如下：
 ```
+--interval
+    [optional] set the time interval(s) of the printed info(default 1s)
+
+--percentile
+    [optional] set the percentile of the tail latency(default 90%)
 
 --sport
     [可选] 指定源端口(default: include any source but NIC lo)
+    
 --dport
     [可选] 指定目的端口(default: include any destination but NIC lo)
 

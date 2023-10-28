@@ -13,13 +13,17 @@ from bcc import BPF
 
 ########## constants and arrays ##########
 res = []
+interval=1000
+percentile=0.95
 ############## arguments #################
 parser = argparse.ArgumentParser(description="Trace time delay in network subsystem",
     formatter_class=argparse.RawDescriptionHelpFormatter)
 parser.add_argument("--sport", help="trace this source port only")
+parser.add_argument("-i","--interval",help="print ave,median at specified interval")
 parser.add_argument("--dport", help="trace this destination port only")
-parser.add_argument("-c", "--count", type=int, default=99999999, help="count of outputs")
+parser.add_argument("-p","--percentile",default=0.9,help="print the top percentile as specified")
 parser.add_argument("--print", action="store_true", help="print results to terminal")
+#parser.add_argument("-c", "--count", type=int, default=99999999, help="count of outputs")
 #parser.add_argument("--visual", action="store_true", help="enable visualization with influxdb-grafana")
 args = parser.parse_args()
 
@@ -32,6 +36,11 @@ if args.sport:
 if args.dport:
     bpf_text = bpf_text.replace('##FILTER_DPORT##', 'if (pkt_tuple.dport != %s) { return 0; }' % args.dport)
 
+if args.interval:
+    interval=1000*float(args.interval)
+
+if args.percentile:
+    percentile = float(args.percentile)
 
 # if args.visual:
 #     from utils import export_delay_analysis_in
@@ -92,6 +101,7 @@ b["timestamp_events"].open_perf_buffer(print_event)
 count = 0
 
 start_time = time.time_ns()//1000000
+
 while 1:
 
     try:
@@ -100,7 +110,7 @@ while 1:
         exit()
     
     now = time.time_ns()//1000000
-    if (now - start_time) > 1000:
-        avg,median,tail_latency=calc_average(0.95)
+    if (now - start_time) > interval:
+        avg,median,tail_latency=calc_average(percentile)
         print("average time: %lf ,median time: %d,tail latency: %d" %(avg,median,tail_latency))
         start_time = now
