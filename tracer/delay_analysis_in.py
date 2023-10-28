@@ -13,23 +13,25 @@ from bcc import BPF
 
 ########## constants and arrays ##########
 res = []
-interval=1000
-percentile=0.95
+interval=1000   #时间间隔
+percentile=0.95 #观察值前95%的位置
 ############## arguments #################
 parser = argparse.ArgumentParser(description="Trace time delay in network subsystem",
-    formatter_class=argparse.RawDescriptionHelpFormatter)
-parser.add_argument("--sport", help="trace this source port only")
-parser.add_argument("-i","--interval",help="print ave,median at specified interval")
-parser.add_argument("--dport", help="trace this destination port only")
-parser.add_argument("-p","--percentile",default=0.9,help="print the top percentile as specified")
-parser.add_argument("--print", action="store_true", help="print results to terminal")
+    formatter_class=argparse.RawDescriptionHelpFormatter)   #创建了一个 ArgumentParser 对象，追踪网络子系统中的时间延迟
+#命令行参数
+parser.add_argument("--sport", help="trace this source port only")  #仅追踪此源端口
+parser.add_argument("-i","--interval",help="print ave,median at specified interval")    #在指定间隔打印平均值和中位数
+parser.add_argument("--dport", help="trace this destination port only") #仅追踪此目的端口
+parser.add_argument("-p","--percentile",default=0.9,help="print the top percentile as specified")   #按指定的百分位打印前百分比
+parser.add_argument("--print", action="store_true", help="print results to terminal")   #将结果打印到终端
 #parser.add_argument("-c", "--count", type=int, default=99999999, help="count of outputs")
-#parser.add_argument("--visual", action="store_true", help="enable visualization with influxdb-grafana")
+parser.add_argument("--visual", action="store_true", help="enable visualization with influxdb-grafana") #输出结果用grafana演示
 args = parser.parse_args()
 
-bpf_text = open('delay_analysis_in.c').read()
+bpf_text = open('delay_analysis_in.c').read()   //读取文件用于网络数据包过滤的 C 代码
 
 # -------- code substitutions --------
+# --sport
 if args.sport:
     bpf_text = bpf_text.replace('##FILTER_SPORT##', 'if (pkt_tuple.sport != %s) { return 0; }' % args.sport)
     
@@ -41,6 +43,9 @@ if args.interval:
 
 if args.percentile:
     percentile = float(args.percentile)
+
+if args.visual:
+    from utils import export_delay_analysis_in
 
 # if args.visual:
 #     from utils import export_delay_analysis_in
@@ -69,8 +74,8 @@ def print_event(cpu, data, size):
             "%d" % (event.ip_time/1000),
             "%d" % (event.tcp_time/1000)
         ))
-    # if args.visual:
-    #     export_delay_analysis_in(event)
+    if args.visual:
+        export_delay_analysis_in(event)
 
 
 def calc_average(percentile=0.9):
